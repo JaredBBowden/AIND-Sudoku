@@ -15,6 +15,7 @@ def assign_value(values, box, value):
         assignments.append(values.copy())
     return values
 
+
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
@@ -27,9 +28,11 @@ def naked_twins(values):
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
 
+
 def cross(A, B):
     "Cross product of elements in A and elements in B."
-    pass
+    return [s+t for s in A for t in B]
+
 
 def grid_values(grid):
     """
@@ -41,7 +44,15 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    pass
+    # TODO Ensure that this is the right function here
+    grid = dict(zip(boxes, grid))
+
+    for value in grid:
+        if grid[value] == ".":
+            grid[value] = '123456789'
+
+    return grid
+
 
 def display(values):
     """
@@ -49,19 +60,85 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-    pass
+    width = 1+max(len(values[s]) for s in boxes)
+    line = '+'.join(['-'*(width*3)]*3)
+    for r in rows:
+        print(''.join(values[r+c].center(width)+('|' if c in '36' else '')
+                      for c in cols))
+        if r in 'CF': print(line)
+    return
+
 
 def eliminate(values):
-    pass
+    for box in values:
+
+        if len(values[box]) == 1:
+            target = values[box]
+            # Move through all peers and remove
+            for peer in peers[box]:
+                values[peer] = values[peer].replace(target, "")
+
+    return values
+
 
 def only_choice(values):
-    pass
+    for unit in unitlist:
+        options = '123456789'
+
+        for option in options:
+            # Wow... this is kinda dense. But the alternative is too verbose
+            surviving_options = [box for box in unit if option in values[box]]
+            if len(surviving_options) == 1:
+                values[surviving_options[0]] = option
+    return values
+
 
 def reduce_puzzle(values):
-    pass
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values_after_elimination = eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values_after_elimination)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+
+    return values
+
 
 def search(values):
-    pass
+    "Using depth-first search and propagation, create a search tree and solve the sudoku."
+    # First, reduce the puzzle using the previous function
+    reduced_values = reduce_puzzle(values)
+
+    # I'm going to borrow pretty hard for the simple case control flow
+    # that determines solved/unsolved status
+    if reduced_values is False:
+        return False ## Failed earlier
+    if all(len(reduced_values[s]) == 1 for s in boxes):
+        return reduced_values ## Solved!
+
+    # Choose one of the unfilled squares with the fewest possibilities
+    # JBB: Sort to find dictionary values with the shortest length
+    sorted_values = sorted(reduced_values.items(), key = lambda item : len(item[1]))
+
+    search_candidates = []
+    for value in sorted_values:
+        if len(value[1]) > 1:
+            search_candidates.append(value[0])
+
 
 def solve(grid):
     """
@@ -72,6 +149,21 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+
+
+# Define some helper values
+rows = 'ABCDEFGHI'
+cols = '123456789'
+
+boxes = cross(rows, cols)
+
+row_units = [cross(r, cols) for r in rows]
+column_units = [cross(rows, c) for c in cols]
+square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+unitlist = row_units + column_units + square_units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
