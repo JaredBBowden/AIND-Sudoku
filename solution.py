@@ -150,6 +150,14 @@ def solve(grid):
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
 
+    # From string input to grid
+    formatted_grid = grid_values(grid)
+
+    # Reduce the puzze with constrain propagation (eliminaiton and search)
+    search_output = search(formatted_grid)
+
+    # Return the current solution
+    return search_output
 
 # Define some helper values
 rows = 'ABCDEFGHI'
