@@ -28,6 +28,29 @@ def naked_twins(values):
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
 
+    # This is only going to work on boxes that have 2 values. Let's start
+    # by identifying if our puzzle has any candidates
+    for box in values:
+        # Find a double
+        if len(values[box]) == 2:
+            #print(values[box])
+
+            # If we found a double, check the peers
+            # associated with this box to see if we have a twin.
+            for peer in peers[box]:
+                if values[peer] == values[box]:
+                    #print("Found a twin")
+
+                    # Under these conditions, we want to remove the
+                    # Values that make up these twins from all other
+                    # peers
+                    for one_twin in values[box]:
+                        print("THIS IS THE VALUE:")
+                        print(one_twin)
+                        for peer in peers[box]:
+                            if (values[peer] != values[box]) & (len(values[peer]) > 1 ):
+                                values[peer] = values[peer].replace(one_twin, "")
+
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
@@ -99,11 +122,13 @@ def reduce_puzzle(values):
         # Check how many boxes have a determined value
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
 
-        # Your code here: Use the Eliminate Strategy
+        # Use the Eliminate Strategy
         values_after_elimination = eliminate(values)
 
-        # Your code here: Use the Only Choice Strategy
+        # Use the Only Choice Strategy
         values = only_choice(values_after_elimination)
+
+        # TODO add naked twins function here
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -149,15 +174,11 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+    # Format and reduce a solution (contraint propagation); then return
+    return search(grid_values(grid))
 
-    # From string input to grid
-    formatted_grid = grid_values(grid)
+    # TODO False if no solution exists? We might need to cover this.
 
-    # Reduce the puzze with constrain propagation (eliminaiton and search)
-    search_output = search(formatted_grid)
-
-    # Return the current solution
-    return search_output
 
 # Define some helper values
 rows = 'ABCDEFGHI'
