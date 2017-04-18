@@ -24,33 +24,20 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-
-    # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
-
-    # This is only going to work on boxes that have 2 values. Let's start
-    # by identifying if our puzzle has any candidates
     for box in values:
-        # Find a double
-        if len(values[box]) == 2:
-            #print(values[box])
+        for peer in peers[box]:
+            if (len(values[box]) == 2) & (values[peer] == values[box]):
 
-            # If we found a double, check the peers
-            # associated with this box to see if we have a twin.
-            for peer in peers[box]:
-                if values[peer] == values[box]:
-                    #print("Found a twin")
+                # identify shared peers
+                peer_intersection = peers[box] & peers[peer]
 
-                    # Under these conditions, we want to remove the
-                    # Values that make up these twins from all other
-                    # peers
-                    for one_twin in values[box]:
-                        print("THIS IS THE VALUE:")
-                        print(one_twin)
-                        for peer in peers[box]:
-                            if (values[peer] != values[box]) & (len(values[peer]) > 1 ):
-                                values[peer] = values[peer].replace(one_twin, "")
-
+                # Remove values that make up these twins from all other peers
+                for one_twin in values[box]:
+                    for peer in peer_intersection:
+                        # Only remove values if there are values to remove!
+                        if (values[box] != values[peer]) & (len(values[peer]) > 1):
+                            values[peer] = values[peer].replace(one_twin, "")
+    return values
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
@@ -99,7 +86,8 @@ def eliminate(values):
             target = values[box]
             # Move through all peers and remove
             for peer in peers[box]:
-                values[peer] = values[peer].replace(target, "")
+                if len(values[peer]) > 1:
+                    values[peer] = values[peer].replace(target, "")
 
     return values
 
@@ -123,12 +111,13 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
 
         # Use the Eliminate Strategy
-        values_after_elimination = eliminate(values)
+        values = eliminate(values)
 
         # Use the Only Choice Strategy
-        values = only_choice(values_after_elimination)
+        values = only_choice(values)
 
-        # TODO add naked twins function here
+        # Remove naked twins
+        values = naked_twins(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -174,10 +163,7 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
-    # Format and reduce a solution (contraint propagation); then return
-    return search(grid_values(grid))
-
-    # TODO False if no solution exists? We might need to cover this.
+    return search(grid)
 
 
 # Define some helper values
