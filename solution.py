@@ -28,7 +28,7 @@ def naked_twins(values):
         for peer in peers[box]:
             if (len(values[box]) == 2) & (values[peer] == values[box]):
 
-                # identify shared peers
+                # Identify shared peers
                 peer_intersection = peers[box] & peers[peer]
 
                 # Remove values that make up these twins from all other peers
@@ -54,7 +54,6 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    # TODO Ensure that this is the right function here
     grid = dict(zip(boxes, grid))
 
     for value in grid:
@@ -80,15 +79,12 @@ def display(values):
 
 
 def eliminate(values):
-    for box in values:
-
-        if len(values[box]) == 1:
-            target = values[box]
-            # Move through all peers and remove
-            for peer in peers[box]:
-                if len(values[peer]) > 1:
-                    values[peer] = values[peer].replace(target, "")
-
+    solved_values = [box for box in values.keys() if len(values[box]) == 1]
+    for box in solved_values:
+        target = values[box]
+        # Move through all peers and remove
+        for peer in peers[box]:
+            values[peer] = values[peer].replace(target,'')
     return values
 
 
@@ -113,11 +109,11 @@ def reduce_puzzle(values):
         # Use the Eliminate Strategy
         values = eliminate(values)
 
-        # Use the Only Choice Strategy
-        values = only_choice(values)
-
         # Remove naked twins
         values = naked_twins(values)
+
+        # Use the Only Choice Strategy
+        values = only_choice(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -137,21 +133,28 @@ def search(values):
     # First, reduce the puzzle using the previous function
     reduced_values = reduce_puzzle(values)
 
-    # I'm going to borrow pretty hard for the simple case control flow
-    # that determines solved/unsolved status
+    # Simple case control flow that determines solved/unsolved status
     if reduced_values is False:
         return False ## Failed earlier
     if all(len(reduced_values[s]) == 1 for s in boxes):
         return reduced_values ## Solved!
 
-    # Choose one of the unfilled squares with the fewest possibilities
-    # JBB: Sort to find dictionary values with the shortest length
+    # Sort to find dictionary values with the shortest length
     sorted_values = sorted(reduced_values.items(), key = lambda item : len(item[1]))
 
     search_candidates = []
     for value in sorted_values:
         if len(value[1]) > 1:
             search_candidates.append(value[0])
+
+    # Now use recursion to solve each one of the resulting sudokus, and if one
+    # returns a value (not False), return that answer!
+    for element in reduced_values[search_candidates[0]]:
+        new_sudoku = reduced_values.copy()
+        new_sudoku[search_candidates[0]] = element
+        attempt = search(new_sudoku)
+        if attempt:
+            return attempt
 
 
 def solve(grid):
@@ -186,7 +189,7 @@ peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
 
 if __name__ == '__main__':
-    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    diag_sudoku_grid = "9.1....8.8.5.7..4.2.4....6...7......5..............83.3..6......9................"
     display(solve(diag_sudoku_grid))
 
     try:
